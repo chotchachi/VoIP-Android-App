@@ -1,0 +1,15 @@
+package com.example.voip_app.util.retrofit;
+
+import com.example.voip_app.util.CommonConstants;
+
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.http.Field;
+import retrofit2.http.FormUrlEncoded;
+import retrofit2.http.POST;
+
+public interface LoginAccountApi {
+    @FormUrlEncoded
+    @POST(CommonConstants.URL_LOGIN)
+    Call<ResponseBody> loginAccount (@Field("phone_number") String phoneNumber, @Field("password") String password);
+}
