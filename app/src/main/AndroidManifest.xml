@@ -15,6 +15,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning">
+        <activity android:name=".view.LoginActivity"></activity>
         <activity android:name=".ReceiveCallActivity" />
         <activity android:name=".MakeCallActivity" />
         <activity android:name=".view.MainActivity">
