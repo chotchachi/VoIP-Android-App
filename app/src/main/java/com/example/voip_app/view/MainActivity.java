@@ -43,7 +43,6 @@ public class MainActivity extends AppCompatActivity {
     private boolean IN_CALL = false;
     private boolean LISTEN = false;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
