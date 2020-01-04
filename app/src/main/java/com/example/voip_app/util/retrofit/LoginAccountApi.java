@@ -12,4 +12,8 @@ public interface LoginAccountApi {
     @FormUrlEncoded
     @POST(CommonConstants.URL_LOGIN)
     Call<ResponseBody> loginAccount (@Field("phone_number") String phoneNumber, @Field("password") String password);
+
+    @FormUrlEncoded
+    @POST(CommonConstants.URL_REGISTER)
+    Call<ResponseBody> registerAccount (@Field("phone_number") String username, @Field("password") String password,@Field("name") String name);
 }

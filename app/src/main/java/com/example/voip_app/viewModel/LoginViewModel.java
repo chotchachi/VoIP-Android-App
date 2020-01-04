@@ -6,7 +6,9 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.voip_app.Repository.LoginRepository;
+import com.example.voip_app.model.Account;
 import com.example.voip_app.util.retrofit.LoginListener;
+import com.example.voip_app.util.retrofit.RegisterListener;
 
 public class LoginViewModel extends ViewModel {
 
@@ -29,5 +31,13 @@ public class LoginViewModel extends ViewModel {
 
     public void login(LoginListener loginListener) {
         userMutableLiveData.getValue().login(loginListener);
+    }
+
+    public void register(String name, RegisterListener listener) {
+        userMutableLiveData.getValue().register(name, listener);
+    }
+
+    public void storeLoginSession(Account account) {
+        userMutableLiveData.getValue().storeLoginSession(account);
     }
 }

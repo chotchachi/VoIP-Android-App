@@ -5,7 +5,11 @@ import androidx.annotation.NonNull;
 import com.example.voip_app.model.Account;
 import com.example.voip_app.util.retrofit.LoginAccountApi;
 import com.example.voip_app.util.retrofit.LoginListener;
+import com.example.voip_app.util.retrofit.RegisterListener;
 import com.example.voip_app.util.retrofit.RetrofitConfig;
+import com.example.voip_app.util.shared.Prefs;
+import com.example.voip_app.util.shared.PrefsKey;
+import com.google.gson.Gson;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -78,5 +82,43 @@ public class LoginRepository {
                 listener.getMessageError(t.getMessage());
             }
         });
+    }
+
+    public void register(String name, RegisterListener listener) {
+        LoginAccountApi loginAccountApi = RetrofitConfig.getRetrofit().create(LoginAccountApi.class);
+        Call<ResponseBody> call = loginAccountApi.registerAccount(phoneNumber, password, name);
+        call.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(@NonNull Call<ResponseBody> call, @NonNull Response<ResponseBody> response) {
+                if (response.isSuccessful()) {
+                    try {
+                        assert response.body() != null;
+                        JSONObject jsonObject = new JSONObject(response.body().string());
+                        int status = jsonObject.getInt("status");
+                        if (status == 1) {
+                            Account account = new Account();
+                            account.setId(jsonObject.getInt("id"));
+                            account.setPhoneNumber(jsonObject.getString("phone"));
+                            account.setName(jsonObject.getString("name"));
+                            listener.onRegisterSuccess(account);
+                        } else if (status == 0){
+                            listener.onRegisterFailed();
+                        }
+                    } catch (JSONException | IOException e) {
+                        listener.getMessageError(e.getMessage());
+                    }
+                }
+            }
+            @Override
+            public void onFailure(@NonNull Call<ResponseBody> call,@NonNull Throwable t) {
+                listener.getMessageError(t.getMessage());
+            }
+        });
+    }
+
+    public void storeLoginSession(Account account){
+        Gson gson = new Gson();
+        String json = gson.toJson(account);
+        Prefs.getInstance().put(PrefsKey.SESSION_ACCOUNT, json);
     }
 }
