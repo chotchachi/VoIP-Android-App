@@ -1,5 +1,8 @@
 package com.example.voip_app;
 
+import android.content.Context;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.util.Log;
 
 import java.io.IOException;
@@ -8,52 +11,102 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 
+import static android.content.Context.WIFI_SERVICE;
+
 public class ContactManager {
-    public static final int BROADCAST_PORT = 50001; // Socket on which packets are sent/received
+    private static final int BROADCAST_PORT = 50001; // Socket dùng chung cho các client để lắng nghe các hoạt động
     private static final int BROADCAST_INTERVAL = 10000; // Milliseconds
-    private static final int BROADCAST_BUF_SIZE = 1024;
     private boolean BROADCAST = true;
     private boolean LISTEN = true;
     private HashMap<String, InetAddress> contacts;
     private InetAddress broadcastIP;
 
-    public ContactManager(String name, InetAddress broadcastIP) {
-        contacts = new HashMap<>();
+    public ContactManager(String name, Context context) {
+        this.contacts = new HashMap<>();
+        InetAddress broadcastIP = getBroadcastIp(context);
         this.broadcastIP = broadcastIP;
-        listen();
         broadcastName(name, broadcastIP);
+        listenBroadcast();
+    }
+
+    private InetAddress getBroadcastIp(Context context) {
+        // Function to return the broadcast address, based on the IP address of the device
+        try {
+            WifiManager wifiManager = (WifiManager) context.getApplicationContext().getSystemService(WIFI_SERVICE);
+            assert wifiManager != null;
+            WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+            int ipAddress = wifiInfo.getIpAddress();
+            String addressString = toBroadcastIp(ipAddress);
+            return InetAddress.getByName(addressString);
+        }
+        catch(UnknownHostException e) {
+            Log.e("xxx", "UnknownHostException in getBroadcastIP: " + e);
+            return null;
+        }
+    }
+    private String toBroadcastIp(int ip) {
+        // Returns converts an IP address in int format to a formatted string
+        return (ip & 0xFF) + "." +
+                ((ip >> 8) & 0xFF) + "." +
+                ((ip >> 16) & 0xFF) + "." +
+                "255";
+    }
+
+    private void broadcastName(final String name, final InetAddress broadcastIP) {
+        Log.i("xxx", "Broadcasting started!");
+        Thread broadcastThread = new Thread(() -> {
+            try {
+                String request = "ADD:"+name;
+                byte[] message = request.getBytes();
+                DatagramSocket socket = new DatagramSocket();
+                socket.setBroadcast(true);
+                DatagramPacket packet = new DatagramPacket(message, message.length, broadcastIP, BROADCAST_PORT);
+                while(BROADCAST) {
+                    socket.send(packet);
+                    Thread.sleep(BROADCAST_INTERVAL);
+                }
+                Log.i("xxx", "Broadcaster ending!");
+                socket.disconnect();
+                socket.close();
+            }
+            catch(SocketException e) {
+                Log.e("xxx", "SocketException in broadcast: " + e);
+            }
+            catch(IOException e) {
+                Log.e("xxx", "IOException in broadcast: " + e);
+            }
+            catch(InterruptedException e) {
+                Log.e("xxx", "InterruptedException in broadcast: " + e);
+            }
+        });
+        broadcastThread.start();
     }
 
     public HashMap<String, InetAddress> getContacts() {
         return contacts;
     }
 
-    public void addContact(String name, InetAddress address) {
-        // If the contact is not already known to us, add it
+    private void addContact(String name, InetAddress address) {
         if(!contacts.containsKey(name)) {
-
             Log.i("xxx", "Adding contact: " + name);
             contacts.put(name, address);
-            Log.i("xxx", "#Contacts: " + contacts.size());
+            Log.i("xxx", "Contacts: " + contacts.size());
             return;
         }
         Log.i("xxx", "Contact already exists: " + name);
-        return;
     }
 
-    public void removeContact(String name) {
-        // If the contact is known to us, remove it
+    private void removeContact(String name) {
         if(contacts.containsKey(name)) {
-
             Log.i("xxx", "Removing contact: " + name);
             contacts.remove(name);
             Log.i("xxx", "#Contacts: " + contacts.size());
             return;
         }
         Log.i("xxx", "Cannot remove contact. " + name + " does not exist.");
-        return;
     }
 
     public void bye(final String name) {
@@ -71,7 +124,6 @@ public class ContactManager {
                 Log.i("xxx", "Broadcast BYE notification!");
                 socket.disconnect();
                 socket.close();
-                return;
             }
             catch(SocketException e) {
 
@@ -85,145 +137,77 @@ public class ContactManager {
         byeThread.start();
     }
 
-    public void broadcastName(final String name, final InetAddress broadcastIP) {
-        // Broadcasts the name of the device at a regular interval
-        Log.i("xxx", "Broadcasting started!");
-        Thread broadcastThread = new Thread(new Runnable() {
-
-            @Override
-            public void run() {
-
-                try {
-
-                    String request = "ADD:"+name;
-                    byte[] message = request.getBytes();
-                    DatagramSocket socket = new DatagramSocket();
-                    socket.setBroadcast(true);
-                    DatagramPacket packet = new DatagramPacket(message, message.length, broadcastIP, BROADCAST_PORT);
-                    while(BROADCAST) {
-
-                        socket.send(packet);
-                        Log.i("xxx", "Broadcast packet sent: " + packet.getAddress().toString());
-                        Thread.sleep(BROADCAST_INTERVAL);
-                    }
-                    Log.i("xxx", "Broadcaster ending!");
-                    socket.disconnect();
-                    socket.close();
-                    return;
-                }
-                catch(SocketException e) {
-
-                    Log.e("xxx", "SocketExceltion in broadcast: " + e);
-                    Log.i("xxx", "Broadcaster ending!");
-                    return;
-                }
-                catch(IOException e) {
-
-                    Log.e("xxx", "IOException in broadcast: " + e);
-                    Log.i("xxx", "Broadcaster ending!");
-                    return;
-                }
-                catch(InterruptedException e) {
-
-                    Log.e("xxx", "InterruptedException in broadcast: " + e);
-                    Log.i("xxx", "Broadcaster ending!");
-                    return;
-                }
-            }
-        });
-        broadcastThread.start();
-    }
-
     public void stopBroadcasting() {
-        // Ends the broadcasting thread
         BROADCAST = false;
     }
 
-    public void listen() {
-        // Create the listener thread
+    public void stopListening() {
+        LISTEN = false;
+    }
+
+    private void listenBroadcast() {
         Log.i("xxx", "Listening started!");
         Thread listenThread = new Thread(new Runnable() {
-
             @Override
             public void run() {
-
                 DatagramSocket socket;
+
                 try {
-
                     socket = new DatagramSocket(BROADCAST_PORT);
-                }
-                catch (SocketException e) {
-
-                    Log.e("xxx", "SocketExcepion in listener: " + e);
+                } catch (SocketException e) {
+                    Log.e("xxx", "SocketException: " + e);
                     return;
                 }
-                byte[] buffer = new byte[BROADCAST_BUF_SIZE];
+
+                byte[] buffer = new byte[1024];
 
                 while(LISTEN) {
-
                     listen(socket, buffer);
                 }
+
                 Log.i("xxx", "Listener ending!");
                 socket.disconnect();
                 socket.close();
-                return;
             }
 
-            public void listen(DatagramSocket socket, byte[] buffer) {
-
+            void listen(DatagramSocket socket, byte[] buffer) {
                 try {
-                    //Listen in for new notifications
-                    Log.i("xxx", "Listening for a packet!");
-                    DatagramPacket packet = new DatagramPacket(buffer, BROADCAST_BUF_SIZE);
+                    // Lắng nghe các hoạt động ở Broadcast Port
+                    DatagramPacket packet = new DatagramPacket(buffer, 1024);
                     socket.setSoTimeout(15000);
                     socket.receive(packet);
                     String data = new String(buffer, 0, packet.getLength());
                     Log.i("xxx", "Packet received: " + data);
                     String action = data.substring(0, 4);
                     if(action.equals("ADD:")) {
-                        // Add notification received. Attempt to add contact
+                        // Lắng nghe người dùng mới
                         Log.i("xxx", "Listener received ADD request");
-                        addContact(data.substring(4, data.length()), packet.getAddress());
+                        addContact(data.substring(4), packet.getAddress());
                     }
                     else if(action.equals("BYE:")) {
-                        // Bye notification received. Attempt to remove contact
+                        // Có người đăng xuất
                         Log.i("xxx", "Listener received BYE request");
-                        removeContact(data.substring(4, data.length()));
+                        removeContact(data.substring(4));
                     }
                     else {
-                        // Invalid notification received
+                        // Không nhận diện được
                         Log.w("xxx", "Listener received invalid request: " + action);
                     }
-
                 }
                 catch(SocketTimeoutException e) {
-
                     Log.i("xxx", "No packet received!");
                     if(LISTEN) {
-
                         listen(socket, buffer);
                     }
-                    return;
                 }
                 catch(SocketException e) {
-
                     Log.e("xxx", "SocketException in listen: " + e);
-                    Log.i("xxx", "Listener ending!");
-                    return;
                 }
                 catch(IOException e) {
-
                     Log.e("xxx", "IOException in listen: " + e);
-                    Log.i("xxx", "Listener ending!");
-                    return;
                 }
             }
         });
         listenThread.start();
-    }
-
-    public void stopListening() {
-        // Stops the listener thread
-        LISTEN = false;
     }
 }

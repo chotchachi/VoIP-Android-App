@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.databinding.DataBindingUtil;
 import androidx.lifecycle.ViewModelProviders;
 
+import com.example.voip_app.App;
 import com.example.voip_app.R;
 import com.example.voip_app.databinding.ActivityLoginBinding;
 import com.example.voip_app.model.Account;
@@ -49,6 +50,10 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
 
+        if (App.getAccount() != null){
+            startActivity(new Intent(LoginActivity.this, HomeActivity.class));
+            finish();
+        }
     }
 
     private void loginUser() {
@@ -81,7 +86,8 @@ public class LoginActivity extends AppCompatActivity {
 
     private void loginSuccess(Account account) {
         loginViewModel.storeLoginSession(account);
-        startActivity(new Intent(LoginActivity.this, MainActivity.class));
+        startActivity(new Intent(LoginActivity.this, HomeActivity.class));
+        finish();
     }
 
     private void initBinding() {

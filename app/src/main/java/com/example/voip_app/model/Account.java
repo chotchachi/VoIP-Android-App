@@ -1,22 +1,24 @@
 package com.example.voip_app.model;
 
+import android.widget.TextView;
+
+import androidx.databinding.BindingAdapter;
+
 public class Account {
     private int id;
     private String phoneNumber;
     //private String password;
     private String name;
-    private int status;
 
     public Account(){
 
     }
 
-    public Account(int id, String phoneNumber, /*String password,*/ String name, int status) {
+    public Account(int id, String phoneNumber, /*String password,*/ String name) {
         this.id = id;
         this.phoneNumber = phoneNumber;
         //this.password = password;
         this.name = name;
-        this.status = status;
     }
 
     public int getId() {
@@ -35,6 +37,10 @@ public class Account {
         this.phoneNumber = phoneNumber;
     }
 
+    @BindingAdapter("phoneNumber")
+    public static void setPhoneContact(TextView view, String phoneNumber) {
+        view.setText(phoneNumber);
+    }
     /*public String getPassword() {
         return password;
     }
@@ -51,12 +57,9 @@ public class Account {
         this.name = name;
     }
 
-    public int getStatus() {
-        return status;
-    }
-
-    public void setStatus(int status) {
-        this.status = status;
+    @BindingAdapter("name")
+    public static void setNameContact(TextView view, String name) {
+        view.setText(name);
     }
 
     @Override
@@ -66,7 +69,6 @@ public class Account {
                 ", phoneNumber='" + phoneNumber + '\'' +
                 /*", password='" + password + '\'' +*/
                 ", name='" + name + '\'' +
-                ", status=" + status +
                 '}';
     }
 }

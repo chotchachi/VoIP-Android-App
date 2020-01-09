@@ -5,8 +5,8 @@ import android.view.View;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-import com.example.voip_app.Repository.LoginRepository;
 import com.example.voip_app.model.Account;
+import com.example.voip_app.repository.LoginRepository;
 import com.example.voip_app.util.retrofit.LoginListener;
 import com.example.voip_app.util.retrofit.RegisterListener;
 

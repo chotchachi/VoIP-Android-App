@@ -1,9 +1,9 @@
-package com.example.voip_app.Repository;
+package com.example.voip_app.repository;
 
 import androidx.annotation.NonNull;
 
 import com.example.voip_app.model.Account;
-import com.example.voip_app.util.retrofit.LoginAccountApi;
+import com.example.voip_app.util.retrofit.ApiFunc;
 import com.example.voip_app.util.retrofit.LoginListener;
 import com.example.voip_app.util.retrofit.RegisterListener;
 import com.example.voip_app.util.retrofit.RetrofitConfig;
@@ -51,8 +51,8 @@ public class LoginRepository {
     }
 
     public void login(LoginListener listener){
-        LoginAccountApi loginAccountApi = RetrofitConfig.getRetrofit().create(LoginAccountApi.class);
-        Call<ResponseBody> call = loginAccountApi.loginAccount(phoneNumber, password);
+        ApiFunc apiFunc = RetrofitConfig.getRetrofit().create(ApiFunc.class);
+        Call<ResponseBody> call = apiFunc.loginAccount(phoneNumber, password);
         call.enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(@NonNull Call<ResponseBody> call, @NonNull Response<ResponseBody> response) {
@@ -85,8 +85,8 @@ public class LoginRepository {
     }
 
     public void register(String name, RegisterListener listener) {
-        LoginAccountApi loginAccountApi = RetrofitConfig.getRetrofit().create(LoginAccountApi.class);
-        Call<ResponseBody> call = loginAccountApi.registerAccount(phoneNumber, password, name);
+        ApiFunc apiFunc = RetrofitConfig.getRetrofit().create(ApiFunc.class);
+        Call<ResponseBody> call = apiFunc.registerAccount(phoneNumber, password, name);
         call.enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(@NonNull Call<ResponseBody> call, @NonNull Response<ResponseBody> response) {
