@@ -22,7 +22,6 @@ import static com.example.voip_app.util.CommonConstants.EXTRA_IP;
 
 public class ReceiveCallActivity extends AppCompatActivity {
     private static final int BROADCAST_PORT = 50002;
-    private static final int BUF_SIZE = 1024;
     private String contactIp;
     private String contactName;
     private boolean LISTEN = true;
@@ -31,7 +30,6 @@ public class ReceiveCallActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_receive_call);
 
@@ -39,77 +37,56 @@ public class ReceiveCallActivity extends AppCompatActivity {
         contactName = intent.getStringExtra(EXTRA_CONTACT);
         contactIp = intent.getStringExtra(EXTRA_IP);
 
-        TextView textView = (TextView) findViewById(R.id.textViewIncomingCall);
-        textView.setText("Incoming call: " + contactName);
+        TextView textView = findViewById(R.id.textViewIncomingCall);
+        textView.setText(contactName);
 
-        final Button endButton = (Button) findViewById(R.id.buttonEndCall1);
+        final Button endButton = findViewById(R.id.buttonEndCall1);
         endButton.setVisibility(View.INVISIBLE);
 
         startListener();
 
         // ACCEPT BUTTON
-        Button acceptButton = (Button) findViewById(R.id.buttonAccept);
-        acceptButton.setOnClickListener(new View.OnClickListener() {
+        Button acceptButton = findViewById(R.id.buttonAccept);
+        acceptButton.setOnClickListener(v -> {
+            try {
+                // Accepting call. Send a notification and start the call
+                sendMessage("ACC:");
+                InetAddress address = InetAddress.getByName(contactIp);
+                Log.i("xxx", "Calling " + address.toString());
+                IN_CALL = true;
+                call = new AudioCall(address);
+                call.startCall();
+                // Hide the buttons as they're not longer required
+                Button accept = findViewById(R.id.buttonAccept);
+                accept.setEnabled(false);
 
-            @Override
-            public void onClick(View v) {
+                Button reject = findViewById(R.id.buttonReject);
+                reject.setEnabled(false);
 
-                try {
-                    // Accepting call. Send a notification and start the call
-                    sendMessage("ACC:");
-                    InetAddress address = InetAddress.getByName(contactIp);
-                    Log.i("xxx", "Calling " + address.toString());
-                    IN_CALL = true;
-                    call = new AudioCall(address);
-                    call.startCall();
-                    // Hide the buttons as they're not longer required
-                    Button accept = (Button) findViewById(R.id.buttonAccept);
-                    accept.setEnabled(false);
-
-                    Button reject = (Button) findViewById(R.id.buttonReject);
-                    reject.setEnabled(false);
-
-                    endButton.setVisibility(View.VISIBLE);
-                }
-                catch(UnknownHostException e) {
-
-                    Log.e("xxx", "UnknownHostException in acceptButton: " + e);
-                }
-                catch(Exception e) {
-
-                    Log.e("xxx", "Exception in acceptButton: " + e);
-                }
+                endButton.setVisibility(View.VISIBLE);
+            }
+            catch(UnknownHostException e) {
+                Log.e("xxx", "UnknownHostException in acceptButton: " + e);
+            }
+            catch(Exception e) {
+                Log.e("xxx", "Exception in acceptButton: " + e);
             }
         });
 
         // REJECT BUTTON
-        Button rejectButton = (Button) findViewById(R.id.buttonReject);
-        rejectButton.setOnClickListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                // Send a reject notification and end the call
-                sendMessage("REJ:");
-                endCall();
-            }
+        Button rejectButton = findViewById(R.id.buttonReject);
+        rejectButton.setOnClickListener(v -> {
+            sendMessage("REJ:");
+            endCall();
         });
 
         // END BUTTON
-        endButton.setOnClickListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-
-                endCall();
-            }
-        });
+        endButton.setOnClickListener(v -> endCall());
     }
 
     private void endCall() {
-        // End the call and send a notification
         stopListener();
         if(IN_CALL) {
-
             call.endCall();
         }
         sendMessage("END:");
@@ -119,91 +96,70 @@ public class ReceiveCallActivity extends AppCompatActivity {
     private void startListener() {
         // Creates the listener thread
         LISTEN = true;
-        Thread listenThread = new Thread(new Runnable() {
+        Thread listenThread = new Thread(() -> {
+            try {
+                Log.i("xxx", "Listener started!");
+                DatagramSocket socket = new DatagramSocket(BROADCAST_PORT);
+                socket.setSoTimeout(1500);
+                byte[] buffer = new byte[1024];
+                DatagramPacket packet = new DatagramPacket(buffer, 1024);
 
-            @Override
-            public void run() {
-
-                try {
-
-                    Log.i("xxx", "Listener started!");
-                    DatagramSocket socket = new DatagramSocket(BROADCAST_PORT);
-                    socket.setSoTimeout(1500);
-                    byte[] buffer = new byte[BUF_SIZE];
-                    DatagramPacket packet = new DatagramPacket(buffer, BUF_SIZE);
-                    while(LISTEN) {
-
-                        try {
-
-                            Log.i("xxx", "Listening for packets");
-                            socket.receive(packet);
-                            String data = new String(buffer, 0, packet.getLength());
-                            Log.i("xxx", "Packet received from "+ packet.getAddress() +" with contents: " + data);
-                            String action = data.substring(0, 4);
-                            if(action.equals("END:")) {
-                                // End call notification received. End call
-                                endCall();
-                            }
-                            else {
-                                // Invalid notification received.
-                                Log.w("xxx", packet.getAddress() + " sent invalid message: " + data);
-                            }
+                while(LISTEN) {
+                    try {
+                        socket.receive(packet);
+                        String data = new String(buffer, 0, packet.getLength());
+                        Log.i("xxx", "Packet received from "+ packet.getAddress() +" with contents: " + data);
+                        String action = data.substring(0, 4);
+                        if(action.equals("END:")) {
+                            endCall();
                         }
-                        catch(IOException e) {
-
-                            Log.e("xxx", "IOException in Listener " + e);
+                        else {
+                            Log.w("xxx", packet.getAddress() + " sent invalid message: " + data);
                         }
                     }
-                    Log.i("xxx", "Listener ending");
-                    socket.disconnect();
-                    socket.close();
-                    return;
+                    catch(IOException e) {
+                        Log.e("xxx", "IOException in Listener " + e);
+                    }
                 }
-                catch(SocketException e) {
-
-                    Log.e("xxx", "SocketException in Listener " + e);
-                    endCall();
-                }
+                Log.i("xxx", "Listener ending");
+                socket.disconnect();
+                socket.close();
+            }
+            catch(SocketException e) {
+                Log.e("xxx", "SocketException in Listener " + e);
+                endCall();
             }
         });
         listenThread.start();
     }
 
     private void stopListener() {
-        // Ends the listener thread
         LISTEN = false;
     }
 
     private void sendMessage(final String message) {
         // Creates a thread for sending notifications
-        Thread replyThread = new Thread(new Runnable() {
+        Thread replyThread = new Thread(() -> {
+            try {
+                InetAddress address = InetAddress.getByName(contactIp);
+                byte[] data = message.getBytes();
+                DatagramSocket socket = new DatagramSocket();
+                DatagramPacket packet = new DatagramPacket(data, data.length, address, BROADCAST_PORT);
+                socket.send(packet);
+                Log.i("xxx", "Sent message( " + message + " ) to " + contactIp);
+                socket.disconnect();
+                socket.close();
+            }
+            catch(UnknownHostException e) {
+                Log.e("xxx", "Failure. UnknownHostException in sendMessage: " + contactIp);
+            }
+            catch(SocketException e) {
 
-            @Override
-            public void run() {
+                Log.e("xxx", "Failure. SocketException in sendMessage: " + e);
+            }
+            catch(IOException e) {
 
-                try {
-
-                    InetAddress address = InetAddress.getByName(contactIp);
-                    byte[] data = message.getBytes();
-                    DatagramSocket socket = new DatagramSocket();
-                    DatagramPacket packet = new DatagramPacket(data, data.length, address, BROADCAST_PORT);
-                    socket.send(packet);
-                    Log.i("xxx", "Sent message( " + message + " ) to " + contactIp);
-                    socket.disconnect();
-                    socket.close();
-                }
-                catch(UnknownHostException e) {
-
-                    Log.e("xxx", "Failure. UnknownHostException in sendMessage: " + contactIp);
-                }
-                catch(SocketException e) {
-
-                    Log.e("xxx", "Failure. SocketException in sendMessage: " + e);
-                }
-                catch(IOException e) {
-
-                    Log.e("xxx", "Failure. IOException in sendMessage: " + e);
-                }
+                Log.e("xxx", "Failure. IOException in sendMessage: " + e);
             }
         });
         replyThread.start();

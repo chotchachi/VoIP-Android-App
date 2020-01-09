@@ -41,9 +41,7 @@ public class HomeFragment extends Fragment implements ContactAdapter.ContactList
         homeViewModel = ViewModelProviders.of(this).get(HomeViewModel.class);
 
         // Get Contacts
-        homeViewModel.getContacts(this).observe(this, accountList -> {
-            adapter.setContactList(accountList);
-        });
+        homeViewModel.getContacts(this).observe(this, accountList -> adapter.setContactList(accountList));
     }
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {

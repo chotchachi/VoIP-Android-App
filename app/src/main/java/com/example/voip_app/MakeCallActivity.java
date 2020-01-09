@@ -1,7 +1,5 @@
 package com.example.voip_app;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -10,7 +8,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.example.voip_app.view.MainActivity;
+import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -26,7 +24,6 @@ import static com.example.voip_app.util.CommonConstants.EXTRA_IP;
 
 public class MakeCallActivity extends AppCompatActivity {
     private static final int BROADCAST_PORT = 50002;
-    private static final int BUF_SIZE = 1024;
     private String displayName;
     private String contactName;
     private String contactIp;
@@ -93,8 +90,8 @@ public class MakeCallActivity extends AppCompatActivity {
                     Log.i("xxx", "Listener started!");
                     DatagramSocket socket = new DatagramSocket(BROADCAST_PORT);
                     socket.setSoTimeout(15000);
-                    byte[] buffer = new byte[BUF_SIZE];
-                    DatagramPacket packet = new DatagramPacket(buffer, BUF_SIZE);
+                    byte[] buffer = new byte[1024];
+                    DatagramPacket packet = new DatagramPacket(buffer, 1024);
                     while(LISTEN) {
 
                         try {

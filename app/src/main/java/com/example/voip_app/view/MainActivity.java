@@ -30,7 +30,6 @@ import static com.example.voip_app.util.CommonConstants.EXTRA_IP;
 public class MainActivity extends AppCompatActivity {
     private static final int LISTENER_PORT = 50003;
     private ContactManager contactManager;
-    private String displayName;
     private boolean STARTED = false;
     private boolean IN_CALL = false;
     private boolean LISTEN = false;
@@ -42,9 +41,8 @@ public class MainActivity extends AppCompatActivity {
 
         STARTED = true;
 
-        displayName = App.getAccount().getName();
+        contactManager = ContactManager.getInstance(App.getAccount().getPhoneNumber(), this);
 
-        contactManager = new ContactManager(displayName, this);
         startCallListener();
 
         // UPDATE BUTTON
@@ -77,9 +75,9 @@ public class MainActivity extends AppCompatActivity {
             Intent intent = new Intent(MainActivity.this, MakeCallActivity.class);
             intent.putExtra(EXTRA_CONTACT, contact);
             String address = ip.toString();
-            address = address.substring(1, address.length());
+            address = address.substring(1);
             intent.putExtra(EXTRA_IP, address);
-            intent.putExtra(EXTRA_DISPLAYNAME, displayName);
+            intent.putExtra(EXTRA_DISPLAYNAME, App.getAccount().getPhoneNumber());
             startActivity(intent);
         });
     }
@@ -156,7 +154,7 @@ public class MainActivity extends AppCompatActivity {
     public void onPause() {
         super.onPause();
         if(STARTED) {
-            contactManager.bye(displayName);
+            contactManager.bye(App.getAccount().getPhoneNumber());
             contactManager.stopBroadcasting();
             contactManager.stopListening();
             //STARTED = false;
@@ -181,7 +179,7 @@ public class MainActivity extends AppCompatActivity {
         Log.i("xxx", "App restarted!");
         IN_CALL = false;
         STARTED = true;
-        contactManager = new ContactManager(displayName, this);
+        contactManager = new ContactManager(App.getAccount().getPhoneNumber(), this);
         startCallListener();
     }
 }

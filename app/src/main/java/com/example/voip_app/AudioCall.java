@@ -24,31 +24,27 @@ public class AudioCall {
     private boolean mic = false; // Enable mic?
     private boolean speakers = false; // Enable speakers?
 
-    public AudioCall(InetAddress address) {
+    AudioCall(InetAddress address) {
         this.address = address;
     }
 
-    public void startCall() {
+    void startCall() {
         startMic();
         startSpeakers();
     }
 
-    public void endCall() {
+    void endCall() {
         muteMic();
         muteSpeakers();
     }
-
-    public void muteMic() {
-
+    private void muteMic() {
         mic = false;
     }
-
-    public void muteSpeakers() {
-
+    private void muteSpeakers() {
         speakers = false;
     }
 
-    public void startMic() {
+    private void startMic() {
         // Creates the thread for capturing and transmitting audio
         mic = true;
         Thread thread = new Thread(() -> {
@@ -80,7 +76,6 @@ public class AudioCall {
                 socket.disconnect();
                 socket.close();
                 mic = false;
-                return;
             }
             catch(InterruptedException e) {
                 Log.e("xxx", "InterruptedException: " + e.toString());
@@ -102,10 +97,9 @@ public class AudioCall {
         thread.start();
     }
 
-    public void startSpeakers() {
+    private void startSpeakers() {
         // Creates the thread for receiving and playing back audio
         if(!speakers) {
-
             speakers = true;
             Thread receiveThread = new Thread(() -> {
                 // Create an instance of AudioTrack, used for playing back audio
@@ -131,15 +125,12 @@ public class AudioCall {
                     track.flush();
                     track.release();
                     speakers = false;
-                    return;
                 }
                 catch(SocketException e) {
-
                     Log.e("xxx", "SocketException: " + e.toString());
                     speakers = false;
                 }
                 catch(IOException e) {
-
                     Log.e("xxx", "IOException: " + e.toString());
                     speakers = false;
                 }

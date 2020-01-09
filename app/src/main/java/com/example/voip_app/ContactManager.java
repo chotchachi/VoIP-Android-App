@@ -23,6 +23,14 @@ public class ContactManager {
     private boolean LISTEN = true;
     private HashMap<String, InetAddress> contacts;
     private InetAddress broadcastIP;
+    public static ContactManager instance;
+
+    public static ContactManager getInstance(String name, Context context){
+        if (instance == null){
+            instance = new ContactManager(name, context);
+        }
+        return instance;
+    }
 
     public ContactManager(String name, Context context) {
         this.contacts = new HashMap<>();
