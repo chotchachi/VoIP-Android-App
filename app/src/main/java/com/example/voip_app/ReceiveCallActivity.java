@@ -54,7 +54,7 @@ public class ReceiveCallActivity extends AppCompatActivity {
                 InetAddress address = InetAddress.getByName(contactIp);
                 Log.i("xxx", "Calling " + address.toString());
                 IN_CALL = true;
-                call = new AudioCall(address);
+                call = new AudioCall(address, 1);
                 call.startCall();
                 // Hide the buttons as they're not longer required
                 Button accept = findViewById(R.id.buttonAccept);

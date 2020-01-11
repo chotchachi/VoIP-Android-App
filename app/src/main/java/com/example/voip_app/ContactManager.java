@@ -23,7 +23,7 @@ public class ContactManager {
     private boolean LISTEN = true;
     private HashMap<String, InetAddress> contacts;
     private InetAddress broadcastIP;
-    public static ContactManager instance;
+    private static ContactManager instance;
 
     public static ContactManager getInstance(String name, Context context){
         if (instance == null){
@@ -32,11 +32,11 @@ public class ContactManager {
         return instance;
     }
 
-    public ContactManager(String name, Context context) {
+    public ContactManager(String phoneNumber, Context context) {
         this.contacts = new HashMap<>();
         InetAddress broadcastIP = getBroadcastIp(context);
         this.broadcastIP = broadcastIP;
-        broadcastName(name, broadcastIP);
+        broadcastMyInfo(phoneNumber, broadcastIP);
         listenBroadcast();
     }
 
@@ -63,22 +63,23 @@ public class ContactManager {
                 "255";
     }
 
-    private void broadcastName(final String name, final InetAddress broadcastIP) {
-        Log.i("xxx", "Broadcasting started!");
+    private void broadcastMyInfo(final String phoneNumber, final InetAddress broadcastIP) {
+        Log.i("xxx", "Broadcast start");
         Thread broadcastThread = new Thread(() -> {
             try {
-                String request = "ADD:"+name;
+                String request = "ADD:"+phoneNumber;
                 byte[] message = request.getBytes();
-                DatagramSocket socket = new DatagramSocket();
-                socket.setBroadcast(true);
+
+                DatagramSocket datagramSocket = new DatagramSocket();
+                datagramSocket.setBroadcast(true);
                 DatagramPacket packet = new DatagramPacket(message, message.length, broadcastIP, BROADCAST_PORT);
                 while(BROADCAST) {
-                    socket.send(packet);
+                    datagramSocket.send(packet);
                     Thread.sleep(BROADCAST_INTERVAL);
                 }
-                Log.i("xxx", "Broadcaster ending!");
-                socket.disconnect();
-                socket.close();
+                Log.i("xxx", "Broadcast end");
+                datagramSocket.disconnect();
+                datagramSocket.close();
             }
             catch(SocketException e) {
                 Log.e("xxx", "SocketException in broadcast: " + e);
@@ -93,28 +94,24 @@ public class ContactManager {
         broadcastThread.start();
     }
 
+    public void stopBroadcasting() {
+        BROADCAST = false;
+    }
+
     public HashMap<String, InetAddress> getContacts() {
         return contacts;
     }
 
     private void addContact(String name, InetAddress address) {
         if(!contacts.containsKey(name)) {
-            Log.i("xxx", "Adding contact: " + name);
             contacts.put(name, address);
-            Log.i("xxx", "Contacts: " + contacts.size());
-            return;
         }
-        Log.i("xxx", "Contact already exists: " + name);
     }
 
     private void removeContact(String name) {
         if(contacts.containsKey(name)) {
-            Log.i("xxx", "Removing contact: " + name);
             contacts.remove(name);
-            Log.i("xxx", "#Contacts: " + contacts.size());
-            return;
         }
-        Log.i("xxx", "Cannot remove contact. " + name + " does not exist.");
     }
 
     public void bye(final String name) {
@@ -134,32 +131,26 @@ public class ContactManager {
                 socket.close();
             }
             catch(SocketException e) {
-
                 Log.e("xxx", "SocketException during BYE notification: " + e);
             }
             catch(IOException e) {
-
                 Log.e("xxx", "IOException during BYE notification: " + e);
             }
         });
         byeThread.start();
     }
 
-    public void stopBroadcasting() {
-        BROADCAST = false;
-    }
 
     public void stopListening() {
         LISTEN = false;
     }
 
     private void listenBroadcast() {
-        Log.i("xxx", "Listening started!");
+        Log.i("xxx", "Listen start");
         Thread listenThread = new Thread(new Runnable() {
             @Override
             public void run() {
                 DatagramSocket socket;
-
                 try {
                     socket = new DatagramSocket(BROADCAST_PORT);
                 } catch (SocketException e) {
@@ -173,7 +164,7 @@ public class ContactManager {
                     listen(socket, buffer);
                 }
 
-                Log.i("xxx", "Listener ending!");
+                Log.i("xxx", "Listen end");
                 socket.disconnect();
                 socket.close();
             }
@@ -203,7 +194,7 @@ public class ContactManager {
                     }
                 }
                 catch(SocketTimeoutException e) {
-                    Log.i("xxx", "No packet received!");
+                    Log.i("xxx", "No packet received");
                     if(LISTEN) {
                         listen(socket, buffer);
                     }

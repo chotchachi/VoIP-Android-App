@@ -1,4 +1,4 @@
-package com.ggh.video.utils;
+package com.example.voip_app.util;
 
 import android.content.Context;
 import android.net.ConnectivityManager;
@@ -11,10 +11,6 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Enumeration;
-
-/**
- * Created by Administrator on 2018/1/8 0008.
- */
 
 public class NetUtils {
     public static String getIPAddress(Context context) {

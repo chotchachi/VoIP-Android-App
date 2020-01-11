@@ -1,25 +1,43 @@
 package com.example.voip_app.model;
 
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.widget.TextView;
 
 import androidx.databinding.BindingAdapter;
 
-public class Account {
+public class Account implements Parcelable {
     private int id;
     private String phoneNumber;
-    //private String password;
     private String name;
 
     public Account(){
 
     }
 
-    public Account(int id, String phoneNumber, /*String password,*/ String name) {
+    public Account(int id, String phoneNumber, String name) {
         this.id = id;
         this.phoneNumber = phoneNumber;
-        //this.password = password;
         this.name = name;
     }
+
+    protected Account(Parcel in) {
+        id = in.readInt();
+        phoneNumber = in.readString();
+        name = in.readString();
+    }
+
+    public static final Creator<Account> CREATOR = new Creator<Account>() {
+        @Override
+        public Account createFromParcel(Parcel in) {
+            return new Account(in);
+        }
+
+        @Override
+        public Account[] newArray(int size) {
+            return new Account[size];
+        }
+    };
 
     public int getId() {
         return id;
@@ -41,13 +59,6 @@ public class Account {
     public static void setPhoneContact(TextView view, String phoneNumber) {
         view.setText(phoneNumber);
     }
-    /*public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }*/
 
     public String getName() {
         return name;
@@ -63,12 +74,14 @@ public class Account {
     }
 
     @Override
-    public String toString() {
-        return "Account{" +
-                "id=" + id +
-                ", phoneNumber='" + phoneNumber + '\'' +
-                /*", password='" + password + '\'' +*/
-                ", name='" + name + '\'' +
-                '}';
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeInt(id);
+        dest.writeString(phoneNumber);
+        dest.writeString(name);
     }
 }

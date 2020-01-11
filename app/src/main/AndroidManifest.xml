@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.example.voip_app">
 
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
@@ -17,6 +18,11 @@
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true"
         tools:ignore="GoogleAppIndexingWarning">
+        <service android:name=".service.CallService"
+            android:enabled="true"
+            android:exported="true"
+            android:permission="TODO" />
+
         <activity
             android:name=".view.HomeActivity"
             android:label="@string/title_activity_home"
@@ -32,6 +38,7 @@
         <activity android:name=".ReceiveCallActivity" />
         <activity android:name=".MakeCallActivity" />
         <activity android:name=".view.MainActivity" />
+
     </application>
 
 </manifest>
