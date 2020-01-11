@@ -8,6 +8,7 @@ import com.example.voip_app.util.shared.PrefsKey;
 import com.google.gson.Gson;
 
 public class App extends Application {
+    public static boolean CALLING = false;
 
     @Override
     public void onCreate() {
