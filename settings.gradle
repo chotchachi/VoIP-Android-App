@@ -1,2 +1,2 @@
-include ':app'
+include ':app', ':ffmpeglib', ':opengl', ':x264encoder'
 rootProject.name='VoIP_APP'

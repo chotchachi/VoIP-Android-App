@@ -1,10 +1,12 @@
 package com.example.voip_app.view.ui.home;
 
+import android.app.Dialog;
 import android.content.Context;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -75,7 +77,19 @@ public class HomeFragment extends Fragment implements ContactAdapter.ContactList
         DataSocket dataSocket = new DataSocket();
         dataSocket.setNguoiGui(nguoiGui);
         dataSocket.setNguoiNhan(nguoiNhan);
-        EventBus.getDefault().post(new CallEvent(GUI, dataSocket));
+        Dialog dialog = new Dialog(context);
+        dialog.setContentView(R.layout.call_dialog);
+        Button btnVoice, btnVideo;
+        btnVoice = dialog.findViewById(R.id.btn_voice);
+        btnVideo = dialog.findViewById(R.id.btn_video);
+        btnVoice.setOnClickListener(v -> EventBus.getDefault().post(new CallEvent(GUI, dataSocket)));
+        btnVideo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
+        dialog.show();
     }
 
     @Override

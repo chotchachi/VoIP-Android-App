@@ -30,10 +30,6 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationV
     final FragmentManager fm = getSupportFragmentManager();
     Fragment active = fragment1;
 
-    private static final int LISTENER_PORT = 50003;
-    private boolean IN_CALL = false;
-    private boolean LISTEN = false;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
