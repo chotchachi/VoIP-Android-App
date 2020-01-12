@@ -1,19 +1,25 @@
 package com.example.voip_app.viewModel;
 
+import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-import com.example.voip_app.App;
 import com.example.voip_app.service.eventBus.CallEvent;
 
 import org.greenrobot.eventbus.EventBus;
 
-import static com.example.voip_app.service.eventBus.CallEvent.KET_THUC;
+import Model.DataSocket;
+
+import static com.example.voip_app.service.eventBus.CallEvent.NGUOI_GUI_END;
 
 
 public class MakeCallViewModel extends ViewModel {
+    private MutableLiveData<DataSocket> dataSocketMutableLiveData = new MutableLiveData<>();
 
     public void onEndCall() {
-        App.CALLING = false;
-        EventBus.getDefault().post(new CallEvent(KET_THUC, null));
+        EventBus.getDefault().post(new CallEvent(NGUOI_GUI_END, dataSocketMutableLiveData.getValue()));
+    }
+
+    public void setDataSocket(DataSocket dataSocket){
+        dataSocketMutableLiveData.setValue(dataSocket);
     }
 }

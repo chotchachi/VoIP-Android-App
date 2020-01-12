@@ -21,9 +21,13 @@ import com.example.voip_app.adapter.ContactAdapter;
 import com.example.voip_app.databinding.FragmentHomeBinding;
 import com.example.voip_app.model.Account;
 import com.example.voip_app.repository.ContactRepository;
-import com.example.voip_app.service.eventBus.CallRequestEvent;
+import com.example.voip_app.service.eventBus.CallEvent;
 
 import org.greenrobot.eventbus.EventBus;
+
+import Model.DataSocket;
+
+import static com.example.voip_app.service.eventBus.CallEvent.GUI;
 
 public class HomeFragment extends Fragment implements ContactAdapter.ContactListener, ContactRepository.GetContactListener {
     private HomeViewModel homeViewModel;
@@ -31,7 +35,6 @@ public class HomeFragment extends Fragment implements ContactAdapter.ContactList
     private RecyclerView recyclerView;
     private Context context;
     private ContactAdapter adapter;
-
 
     @Override
     public void onAttach(@NonNull Context context) {
@@ -69,7 +72,10 @@ public class HomeFragment extends Fragment implements ContactAdapter.ContactList
         Account me = App.getAccount();
         Model.Account nguoiGui = new Model.Account(me.getId(), me.getPhoneNumber(), me.getName());
         Model.Account nguoiNhan = new Model.Account(account.getId(), account.getPhoneNumber(), account.getName());
-        EventBus.getDefault().post(new CallRequestEvent(nguoiGui, nguoiNhan));
+        DataSocket dataSocket = new DataSocket();
+        dataSocket.setNguoiGui(nguoiGui);
+        dataSocket.setNguoiNhan(nguoiNhan);
+        EventBus.getDefault().post(new CallEvent(GUI, dataSocket));
     }
 
     @Override

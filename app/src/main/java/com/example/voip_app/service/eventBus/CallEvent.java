@@ -8,11 +8,16 @@ public class CallEvent {
 
     public static final int TU_CHOI = 4;
     public static final int BAN_DONG_Y = 5;
-    public static final int KET_THUC = 6;
+
+    public static final int NGUOI_GUI_END = 6;
+    public static final int NGUOI_NHAN_END = 3;
+
+    public static final int BAN_KET_THUC = 9;
 
     public static final int TOI_DONG_Y = 7;
+    public static final int TOI_TU_CHOI = 8;
 
-    public static final int START_MIC = 8;
+    public static final int KET_THUC_VIEW = 0;
 
     private int action;
     private DataSocket dataSocket;

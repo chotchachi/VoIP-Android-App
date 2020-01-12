@@ -17,14 +17,17 @@ public class ReceiveCallViewModel extends ViewModel {
 
     public void onAccept(){
         DataSocket dataSocket = dataSocketMutableLiveData.getValue();
-        /*try {
-            AudioCall audioCall = new AudioCall(InetAddress.getByName(dataSocket.getData()[0]), Integer.parseInt(dataSocket.getData()[1]));
-            audioCall.startCall();
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        }
-*/
         EventBus.getDefault().post(new CallEvent(CallEvent.TOI_DONG_Y, dataSocket));
+    }
+
+    public void onReject(){
+        DataSocket dataSocket = dataSocketMutableLiveData.getValue();
+        EventBus.getDefault().post(new CallEvent(CallEvent.TOI_TU_CHOI, dataSocket));
+    }
+
+    public void onEndCall(){
+        DataSocket dataSocket = dataSocketMutableLiveData.getValue();
+        EventBus.getDefault().post(new CallEvent(CallEvent.NGUOI_NHAN_END, dataSocket));
     }
 
     public void setAccount(Account account){

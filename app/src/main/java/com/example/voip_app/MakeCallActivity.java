@@ -1,37 +1,34 @@
 package com.example.voip_app;
 
-import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
-import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.databinding.DataBindingUtil;
+import androidx.lifecycle.ViewModelProviders;
 
-import com.example.voip_app.model.Account;
-import com.example.voip_app.service.eventBus.CallAcceptEvent;
+import com.example.voip_app.databinding.ActivityMakeCallBinding;
+import com.example.voip_app.service.eventBus.CallEvent;
+import com.example.voip_app.viewModel.MakeCallViewModel;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
-import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.SocketException;
-import java.net.SocketTimeoutException;
-import java.net.UnknownHostException;
+import Model.Account;
+import Model.DataSocket;
 
+import static com.example.voip_app.service.eventBus.CallEvent.BAN_DONG_Y;
+import static com.example.voip_app.service.eventBus.CallEvent.KET_THUC_VIEW;
+import static com.example.voip_app.service.eventBus.CallEvent.NGUOI_GUI_END;
+import static com.example.voip_app.service.eventBus.CallEvent.TU_CHOI;
 import static com.example.voip_app.util.CommonConstants.EXTRA_CONTACT;
+import static com.example.voip_app.util.CommonConstants.EXTRA_DATA_SOCKET;
 
 public class MakeCallActivity extends AppCompatActivity {
-    private static final int BROADCAST_PORT = 50002;
-    private Account receiveAccount;
+    private ActivityMakeCallBinding binding;
+    private MakeCallViewModel viewModel;
 
-    private String displayName;
-    private String contactIp;
-    private boolean LISTEN = true;
-    private boolean IN_CALL = false;
-    private AudioCall call;
+    private Account receiveAccount;
+    private DataSocket dataSocket;
 
     @Override
     protected void onStart() {
@@ -42,36 +39,38 @@ public class MakeCallActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_make_call);
 
+        initBinding();
 
-        Intent intent = getIntent();
-        receiveAccount = intent.getParcelableExtra(EXTRA_CONTACT);
+        Bundle bundle = getIntent().getExtras();
+        receiveAccount = (Account) bundle.getSerializable(EXTRA_CONTACT);
+        dataSocket = (DataSocket) bundle.getSerializable(EXTRA_DATA_SOCKET);
 
-        //displayName = intent.getStringExtra(EXTRA_DISPLAYNAME);
-        //contactIp = intent.getStringExtra(EXTRA_IP);
+        binding.setAccount(receiveAccount);
+        viewModel.setDataSocket(dataSocket);
 
-        TextView textView = findViewById(R.id.textViewCalling);
-        textView.setText(receiveAccount.getName() + "-" + receiveAccount.getPhoneNumber());
+    }
 
-        /*startListener();
-        makeCall();
-
-        Button endButton = findViewById(R.id.buttonEndCall);
-        endButton.setOnClickListener(v -> endCall());*/
+    private void initBinding() {
+        viewModel = ViewModelProviders.of(this).get(MakeCallViewModel.class);
+        binding = DataBindingUtil.setContentView(MakeCallActivity.this, R.layout.activity_make_call);
+        binding.setLifecycleOwner(this);
+        binding.setViewModel(viewModel);
     }
 
     @Subscribe
-    public void onCallAcceptEvent(CallAcceptEvent event) {
-        Log.d("xxx", event.getDataSocket().getData()[0]+"-"+event.getDataSocket().getData()[1]);
-        try {
-            call = new AudioCall(InetAddress.getByName(event.getDataSocket().getData()[0]), Integer.parseInt(event.getDataSocket().getData()[1]));
-            call.startCall();
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
+    public void onCallEvent(CallEvent event) {
+        switch (event.getAction()){
+            case TU_CHOI:
+            case NGUOI_GUI_END:
+            case KET_THUC_VIEW:
+                finish();
+                break;
+            case BAN_DONG_Y:
+
+                break;
         }
     }
-
 
     @Override
     protected void onStop() {
@@ -79,7 +78,7 @@ public class MakeCallActivity extends AppCompatActivity {
         EventBus.getDefault().unregister(this);
     }
 
-    private void makeCall() {
+    /*private void makeCall() {
         sendMessage("CAL:"+displayName, 50003);
     }
 
@@ -87,7 +86,6 @@ public class MakeCallActivity extends AppCompatActivity {
         // Ends the chat sessions
         stopListener();
         if(IN_CALL) {
-
             call.endCall();
         }
         sendMessage("END:", BROADCAST_PORT);
@@ -179,5 +177,5 @@ public class MakeCallActivity extends AppCompatActivity {
             }
         });
         replyThread.start();
-    }
+    }*/
 }

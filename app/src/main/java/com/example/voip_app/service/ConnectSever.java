@@ -3,7 +3,7 @@ package com.example.voip_app.service;
 import android.util.Log;
 
 import com.example.voip_app.App;
-import com.example.voip_app.service.eventBus.CallAcceptEvent;
+import com.example.voip_app.service.eventBus.CallEvent;
 import com.example.voip_app.util.CommonConstants;
 
 import org.greenrobot.eventbus.EventBus;
@@ -17,9 +17,13 @@ import java.util.Objects;
 
 import Model.DataSocket;
 
+import static com.example.voip_app.service.eventBus.CallEvent.BAN_DONG_Y;
+import static com.example.voip_app.service.eventBus.CallEvent.BAN_KET_THUC;
+import static com.example.voip_app.service.eventBus.CallEvent.NHAN;
+import static com.example.voip_app.service.eventBus.CallEvent.TU_CHOI;
+
 public class ConnectSever extends Thread {
     private static Socket socket;
-    private ObjectInputStream ois = null;
     private DataSocket respon = null;
 
     @Override
@@ -39,10 +43,10 @@ public class ConnectSever extends Thread {
 
                 objectOutputStream.writeObject(dtsk);
 
-                ois = new ObjectInputStream(socket.getInputStream());
+                ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
                 while (true) {
                     respon = (DataSocket) ois.readObject();
-                    System.out.println(respon.getAction());
+                    Log.d("xxx", respon.getAction());
                     switch (respon.getAction()) {
                         case "respon_call":
                             responCall(respon);
@@ -51,10 +55,10 @@ public class ConnectSever extends Thread {
                             requestCall(respon);
                             break;
                         case "endcall":
-                            endCall(respon);
+                            endCall();
                             break;
                         default:
-                            System.out.println("Unknown action");
+                            Log.d("xxx", "Unknown action");
                     }
                 }
             } catch (IOException | ClassNotFoundException e){
@@ -70,8 +74,24 @@ public class ConnectSever extends Thread {
     }
 
     private void requestCall(DataSocket data) {
-        System.out.println("Đã nhận yêu cầu cuộc gọi");
+        Log.d("xxx", "Đã nhận yêu cầu cuộc gọi");
 
+        if (App.CALLING){
+            DataSocket dtsk = new DataSocket();
+            dtsk.setAction("respon_call");
+            dtsk.setNguoiGui(data.getNguoiNhan());
+            dtsk.setNguoiNhan(data.getNguoiGui());
+            dtsk.setAccept(false);
+            try {
+                ObjectOutputStream dout = new ObjectOutputStream(socket.getOutputStream());
+                dout.writeObject(dtsk);
+                Log.d("xxx", "Đã gửi phản hồi: từ chối");
+            } catch (IOException e) {
+                Log.d("xxx", Objects.requireNonNull(e.getMessage()));
+            }
+        } else {
+            EventBus.getDefault().post(new CallEvent(NHAN, data));
+        }
     }
 
     private void responCall(DataSocket data) {
@@ -79,14 +99,16 @@ public class ConnectSever extends Thread {
 
         // Từ chối
         if (!data.isAccept()) {
-
+            App.CALLING = false;
+            EventBus.getDefault().post(new CallEvent(TU_CHOI, null));
             // Đồng ý
         } else {
-            EventBus.getDefault().post(new CallAcceptEvent(data));
+            EventBus.getDefault().post(new CallEvent(BAN_DONG_Y, data));
         }
     }
 
-    private void endCall(DataSocket dataSocket){
-
+    private void endCall(){
+        App.CALLING = false;
+        EventBus.getDefault().post(new CallEvent(BAN_KET_THUC, null));
     }
 }

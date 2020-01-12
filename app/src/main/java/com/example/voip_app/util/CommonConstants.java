@@ -9,8 +9,9 @@ public class CommonConstants {
     public static final String URL_LOAD_CONTACT = "contact.php";
 
     public final static String EXTRA_CONTACT = "CONTACT";
+    public final static String EXTRA_DATA_SOCKET = "DATA_SOCKET";
     public final static String EXTRA_IP = "IP";
     public final static String EXTRA_DISPLAYNAME = "DISPLAYNAME";
 
-    public static final int MY_PORT = 8886;
+    public static final int AUDIO_PORT = 50000;
 }

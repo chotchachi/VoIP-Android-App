@@ -7,8 +7,6 @@ import android.media.AudioTrack;
 import android.media.MediaRecorder;
 import android.util.Log;
 
-import com.example.voip_app.util.CommonConstants;
-
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -17,32 +15,34 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 
 public class AudioCall {
-    private static final int SAMPLE_RATE = 8000; // Hertz
-    private static final int SAMPLE_INTERVAL = 20; // Milliseconds
-    private static final int SAMPLE_SIZE = 2; // Bytes
-    private static final int BUF_SIZE = SAMPLE_INTERVAL * SAMPLE_INTERVAL * SAMPLE_SIZE * 2; //Bytes
-    private InetAddress receiveIP; // Address to call
-    private boolean mic = false; // Enable mic?
-    private boolean speakers = false; // Enable speakers?
-    private int receivePort;
+    private static final int SAMPLE_RATE = 8000;
+    private static final int SAMPLE_INTERVAL = 20;
+    private static final int SAMPLE_SIZE = 2;
+    private static final int BUF_SIZE = SAMPLE_INTERVAL * SAMPLE_INTERVAL * SAMPLE_SIZE * 2;
+    private InetAddress address;
+    private int port;
+    private boolean mic = false;
+    private boolean speakers = false;
 
-    AudioCall(InetAddress address, int port) {
-        this.receiveIP = address;
-        this.receivePort = port;
+    public AudioCall(InetAddress address, int port) {
+        this.address = address;
+        this.port = port;
     }
 
-    void startCall() {
+    public void startCall() {
         startMic();
         startSpeakers();
     }
 
-    void endCall() {
+    public void endCall() {
         muteMic();
         muteSpeakers();
     }
+
     private void muteMic() {
         mic = false;
     }
+
     private void muteSpeakers() {
         speakers = false;
     }
@@ -55,13 +55,13 @@ public class AudioCall {
                     AudioRecord.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)*10);
             int bytes_read = 0;
             int bytes_sent = 0;
-            byte[] buf = new byte[512];
+            byte[] buf = new byte[BUF_SIZE];
             try {
                 DatagramSocket socket = new DatagramSocket();
                 audioRecorder.startRecording();
                 while(mic) {
-                    bytes_read = audioRecorder.read(buf, 0, buf.length);
-                    DatagramPacket packet = new DatagramPacket(buf, buf.length, receiveIP, receivePort);
+                    bytes_read = audioRecorder.read(buf, 0, BUF_SIZE);
+                    DatagramPacket packet = new DatagramPacket(buf, bytes_read, address, port);
                     socket.send(packet);
                     bytes_sent += bytes_read;
                     Log.i("xxx", "Send: " + bytes_sent);
@@ -101,13 +101,13 @@ public class AudioCall {
                         AudioFormat.ENCODING_PCM_16BIT, BUF_SIZE, AudioTrack.MODE_STREAM);
                 track.play();
                 try {
-                    DatagramSocket socket = new DatagramSocket(CommonConstants.MY_PORT);
-                    byte[] buf = new byte[512];
+                    DatagramSocket socket = new DatagramSocket(port);
+                    byte[] buf = new byte[BUF_SIZE];
                     while(speakers) {
-                        DatagramPacket packet = new DatagramPacket(buf, buf.length);
+                        DatagramPacket packet = new DatagramPacket(buf, BUF_SIZE);
                         socket.receive(packet);
-                        Log.i("xxx", "Receive: " + packet.getLength());
-                        track.write(packet.getData(), 0, packet.getData().length);
+                        Log.i("xxx", "Received: " + packet.getLength());
+                        track.write(packet.getData(), 0, BUF_SIZE);
                     }
                     socket.disconnect();
                     socket.close();
