@@ -29,7 +29,8 @@ import org.greenrobot.eventbus.EventBus;
 
 import Model.DataSocket;
 
-import static com.example.voip_app.service.eventBus.CallEvent.GUI;
+import static com.example.voip_app.service.eventBus.CallEvent.GUI_VIDEO_CALL;
+import static com.example.voip_app.service.eventBus.CallEvent.GUI_VOICE_CALL;
 
 public class HomeFragment extends Fragment implements ContactAdapter.ContactListener, ContactRepository.GetContactListener {
     private HomeViewModel homeViewModel;
@@ -37,6 +38,8 @@ public class HomeFragment extends Fragment implements ContactAdapter.ContactList
     private RecyclerView recyclerView;
     private Context context;
     private ContactAdapter adapter;
+    private Dialog dialog;
+    private DataSocket currentDTSK;
 
     @Override
     public void onAttach(@NonNull Context context) {
@@ -60,7 +63,24 @@ public class HomeFragment extends Fragment implements ContactAdapter.ContactList
         recyclerView = binding.rvContact;
         binding.setAccount(App.getAccount());
         initRecyclerView();
+        initDialog();
         return view;
+    }
+
+    private void initDialog() {
+        dialog = new Dialog(context);
+        dialog.setContentView(R.layout.call_dialog);
+        Button btnVoice, btnVideo;
+        btnVoice = dialog.findViewById(R.id.btn_voice);
+        btnVideo = dialog.findViewById(R.id.btn_video);
+        btnVoice.setOnClickListener(v -> {
+            dialog.dismiss();
+            EventBus.getDefault().post(new CallEvent(GUI_VOICE_CALL, currentDTSK));
+        });
+        btnVideo.setOnClickListener(v -> {
+            dialog.dismiss();
+            EventBus.getDefault().post(new CallEvent(GUI_VIDEO_CALL, currentDTSK));
+        });
     }
 
     private void initRecyclerView() {
@@ -77,18 +97,9 @@ public class HomeFragment extends Fragment implements ContactAdapter.ContactList
         DataSocket dataSocket = new DataSocket();
         dataSocket.setNguoiGui(nguoiGui);
         dataSocket.setNguoiNhan(nguoiNhan);
-        Dialog dialog = new Dialog(context);
-        dialog.setContentView(R.layout.call_dialog);
-        Button btnVoice, btnVideo;
-        btnVoice = dialog.findViewById(R.id.btn_voice);
-        btnVideo = dialog.findViewById(R.id.btn_video);
-        btnVoice.setOnClickListener(v -> EventBus.getDefault().post(new CallEvent(GUI, dataSocket)));
-        btnVideo.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
 
-            }
-        });
+        this.currentDTSK = dataSocket;
+
         dialog.show();
     }
 

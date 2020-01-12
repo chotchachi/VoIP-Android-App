@@ -19,7 +19,8 @@ import Model.DataSocket;
 
 import static com.example.voip_app.service.eventBus.CallEvent.BAN_DONG_Y;
 import static com.example.voip_app.service.eventBus.CallEvent.BAN_KET_THUC;
-import static com.example.voip_app.service.eventBus.CallEvent.NHAN;
+import static com.example.voip_app.service.eventBus.CallEvent.NHAN_VIDEO_CALL;
+import static com.example.voip_app.service.eventBus.CallEvent.NHAN_VOICE_CALL;
 import static com.example.voip_app.service.eventBus.CallEvent.TU_CHOI;
 
 public class ConnectSever extends Thread {
@@ -57,6 +58,8 @@ public class ConnectSever extends Thread {
                         case "endcall":
                             endCall();
                             break;
+                        case "request_video":
+                            requestVideo(respon);
                         default:
                             Log.d("xxx", "Unknown action");
                     }
@@ -74,7 +77,7 @@ public class ConnectSever extends Thread {
     }
 
     private void requestCall(DataSocket data) {
-        Log.d("xxx", "Đã nhận yêu cầu cuộc gọi");
+        Log.d("xxx", "Đã nhận yêu cầu cuộc gọi voice");
 
         if (App.CALLING){
             DataSocket dtsk = new DataSocket();
@@ -90,7 +93,28 @@ public class ConnectSever extends Thread {
                 Log.d("xxx", Objects.requireNonNull(e.getMessage()));
             }
         } else {
-            EventBus.getDefault().post(new CallEvent(NHAN, data));
+            EventBus.getDefault().post(new CallEvent(NHAN_VOICE_CALL, data));
+        }
+    }
+
+    private void requestVideo(DataSocket data) {
+        Log.d("xxx", "Đã nhận yêu cầu cuộc gọi video");
+
+        if (App.CALLING){
+            DataSocket dtsk = new DataSocket();
+            dtsk.setAction("respon_video");
+            dtsk.setNguoiGui(data.getNguoiNhan());
+            dtsk.setNguoiNhan(data.getNguoiGui());
+            dtsk.setAccept(false);
+            try {
+                ObjectOutputStream dout = new ObjectOutputStream(socket.getOutputStream());
+                dout.writeObject(dtsk);
+                Log.d("xxx", "Đã gửi phản hồi: từ chối");
+            } catch (IOException e) {
+                Log.d("xxx", Objects.requireNonNull(e.getMessage()));
+            }
+        } else {
+            EventBus.getDefault().post(new CallEvent(NHAN_VIDEO_CALL, data));
         }
     }
 

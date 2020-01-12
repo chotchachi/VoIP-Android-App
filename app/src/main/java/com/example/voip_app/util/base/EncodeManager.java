@@ -1,31 +1,12 @@
-package com.example.voip_app.base;
+package com.example.voip_app.util.base;
 
+import com.example.voip_app.util.encode.IEncoderCallback;
 
-import com.example.voip_app.encode.IEncoderCallback;
-
-/**
- * @author xmtggh
- * @time 2019/8/14
- * @email 626393661@qq.com
- **/
 public abstract class EncodeManager {
-    /**
-     * 视频分辨率宽
-     */
     protected int vWidth;
-    /**
-     * 视频分辨率高
-     */
     protected int vHeight;
-    /**
-     * 视频比特率
-     */
     protected int vBitrate;
-    /**
-     * 视频帧率
-     */
     protected int vFrameRate;
-
     protected IEncoderCallback mEncodeCallback;
 
     public EncodeManager() {
@@ -38,19 +19,11 @@ public abstract class EncodeManager {
         this.vFrameRate = vFrameRate;
     }
 
-    /**
-     * 设置编码结果回调
-     * @param mEncodeCallback
-     */
     public void setEncodeCallback(IEncoderCallback mEncodeCallback) {
         this.mEncodeCallback = mEncodeCallback;
     }
 
     protected abstract void initEncode();
     protected abstract void destory();
-    /**
-     * 传入编码数据
-     * @param data
-     */
     public abstract void onEncodeData(byte[] data);
 }

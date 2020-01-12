@@ -30,18 +30,22 @@ import Model.DataSocket;
 
 import static com.example.voip_app.service.eventBus.CallEvent.BAN_DONG_Y;
 import static com.example.voip_app.service.eventBus.CallEvent.BAN_KET_THUC;
-import static com.example.voip_app.service.eventBus.CallEvent.GUI;
+import static com.example.voip_app.service.eventBus.CallEvent.GUI_VIDEO_CALL;
+import static com.example.voip_app.service.eventBus.CallEvent.GUI_VOICE_CALL;
 import static com.example.voip_app.service.eventBus.CallEvent.KET_THUC_VIEW;
 import static com.example.voip_app.service.eventBus.CallEvent.NGUOI_GUI_END;
 import static com.example.voip_app.service.eventBus.CallEvent.NGUOI_NHAN_END;
-import static com.example.voip_app.service.eventBus.CallEvent.NHAN;
+import static com.example.voip_app.service.eventBus.CallEvent.NHAN_VIDEO_CALL;
+import static com.example.voip_app.service.eventBus.CallEvent.NHAN_VOICE_CALL;
 import static com.example.voip_app.service.eventBus.CallEvent.TOI_DONG_Y;
 import static com.example.voip_app.service.eventBus.CallEvent.TOI_TU_CHOI;
-import static com.example.voip_app.util.CommonConstants.EXTRA_CONTACT;
 import static com.example.voip_app.util.CommonConstants.EXTRA_DATA_SOCKET;
 
 public class CallService extends Service {
     private AudioCall audioCall;
+    public static final String TYPE_CALL = "TYPE_CALL";
+    public static final int VOICE_CALL = 1;
+    public static final int VIDEO_CALL = 2;
 
     @Override
     public void onCreate() {
@@ -69,157 +73,205 @@ public class CallService extends Service {
 
     @Subscribe
     public void onEvent(CallEvent event) {
-        if (event.getAction() == GUI){
-            new Thread(() -> {
-                try {
-                    Log.d("xxx", "Đã gửi yêu cầu cuộc gọi");
+        switch (event.getAction()) {
+            case GUI_VOICE_CALL:
+                new Thread(() -> {
+                    try {
+                        Log.d("xxx", "Đã gửi yêu cầu cuộc gọi voice");
 
-                    OutputStream outputStream = ConnectSever.getSocket().getOutputStream();
-                    ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
+                        OutputStream outputStream = ConnectSever.getSocket().getOutputStream();
+                        ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
 
+                        DataSocket dtsk = new DataSocket();
+                        dtsk.setAction("request_call");
+                        dtsk.setNguoiGui(event.getDataSocket().getNguoiGui());
+                        dtsk.setNguoiNhan(event.getDataSocket().getNguoiNhan());
+                        String[] data = new String[2];
+                        data[0] = NetUtils.getIPAddress(getApplicationContext());
+                        data[1] = String.valueOf(CommonConstants.AUDIO_PORT);
+                        dtsk.setData(data);
+
+                        objectOutputStream.writeObject(dtsk);
+
+                        App.CALLING = true;
+
+                        Intent intent = new Intent(this, MakeCallActivity.class);
+                        Bundle bundle = new Bundle();
+
+                        bundle.putSerializable(EXTRA_DATA_SOCKET, event.getDataSocket());
+                        bundle.putInt(TYPE_CALL, VOICE_CALL);
+                        intent.putExtras(bundle);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
+                    } catch (IOException e) {
+                        Log.d("xxx", Objects.requireNonNull(e.getMessage()));
+                    }
+                }).start();
+                break;
+            case GUI_VIDEO_CALL:
+                new Thread(() -> {
+                    try {
+                        Log.d("xxx", "Đã gửi yêu cầu cuộc gọi video");
+
+                        OutputStream outputStream = ConnectSever.getSocket().getOutputStream();
+                        ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
+
+                        DataSocket dtsk = new DataSocket();
+                        dtsk.setAction("request_video");
+                        dtsk.setNguoiGui(event.getDataSocket().getNguoiGui());
+                        dtsk.setNguoiNhan(event.getDataSocket().getNguoiNhan());
+                        String[] data = new String[2];
+                        data[0] = NetUtils.getIPAddress(getApplicationContext());
+                        data[1] = String.valueOf(CommonConstants.AUDIO_PORT);
+                        dtsk.setData(data);
+
+                        objectOutputStream.writeObject(dtsk);
+
+                        App.CALLING = true;
+
+                        Intent intent = new Intent(this, MakeCallActivity.class);
+                        Bundle bundle = new Bundle();
+
+                        bundle.putSerializable(EXTRA_DATA_SOCKET, event.getDataSocket());
+                        bundle.putInt(TYPE_CALL, VIDEO_CALL);
+                        intent.putExtras(bundle);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
+                    } catch (IOException e) {
+                        Log.d("xxx", Objects.requireNonNull(e.getMessage()));
+                    }
+                }).start();
+                break;
+            case NHAN_VOICE_CALL:
+                App.CALLING = true;
+
+                Intent intent = new Intent(this, ReceiveCallActivity.class);
+                Bundle bundle = new Bundle();
+
+                bundle.putSerializable(EXTRA_DATA_SOCKET, event.getDataSocket());
+                bundle.putInt(TYPE_CALL, VOICE_CALL);
+                intent.putExtras(bundle);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+                break;
+            case NHAN_VIDEO_CALL:
+                App.CALLING = true;
+
+                Intent intent2 = new Intent(this, ReceiveCallActivity.class);
+                Bundle bundle2 = new Bundle();
+
+                bundle2.putSerializable(EXTRA_DATA_SOCKET, event.getDataSocket());
+                bundle2.putInt(TYPE_CALL, VIDEO_CALL);
+                intent2.putExtras(bundle2);
+                intent2.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent2);
+                break;
+            case TOI_DONG_Y:
+                new Thread(() -> {
                     DataSocket dtsk = new DataSocket();
-                    dtsk.setAction("request_call");
-                    dtsk.setNguoiGui(event.getDataSocket().getNguoiGui());
-                    dtsk.setNguoiNhan(event.getDataSocket().getNguoiNhan());
+                    dtsk.setAction("respon_call");
+                    dtsk.setNguoiGui(event.getDataSocket().getNguoiNhan());
+                    dtsk.setNguoiNhan(event.getDataSocket().getNguoiGui());
                     String[] data = new String[2];
                     data[0] = NetUtils.getIPAddress(getApplicationContext());
                     data[1] = String.valueOf(CommonConstants.AUDIO_PORT);
                     dtsk.setData(data);
-
-                    objectOutputStream.writeObject(dtsk);
-
-                    App.CALLING = true;
-
-                    Intent intent = new Intent(this, MakeCallActivity.class);
-                    Bundle bundle = new Bundle();
-
-                    bundle.putSerializable(EXTRA_CONTACT, event.getDataSocket().getNguoiNhan());
-                    bundle.putSerializable(EXTRA_DATA_SOCKET, event.getDataSocket());
-                    intent.putExtras(bundle);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    startActivity(intent);
-                } catch (IOException e){
-                    Log.d("xxx", Objects.requireNonNull(e.getMessage()));
-                }
-            }).start();
-        }
-        else if (event.getAction() == NHAN){
-            App.CALLING = true;
-
-            Intent intent = new Intent(this, ReceiveCallActivity.class);
-            Bundle bundle = new Bundle();
-
-            bundle.putSerializable(EXTRA_CONTACT, event.getDataSocket().getNguoiGui());
-            bundle.putSerializable(EXTRA_DATA_SOCKET, event.getDataSocket());
-            intent.putExtras(bundle);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(intent);
-        }
-        else if (event.getAction() == TOI_DONG_Y){
-            new Thread(() -> {
-                DataSocket dtsk = new DataSocket();
-                dtsk.setAction("respon_call");
-                dtsk.setNguoiGui(event.getDataSocket().getNguoiNhan());
-                dtsk.setNguoiNhan(event.getDataSocket().getNguoiGui());
-                String[] data = new String[2];
-                data[0] = NetUtils.getIPAddress(getApplicationContext());
-                data[1] = String.valueOf(CommonConstants.AUDIO_PORT);
-                dtsk.setData(data);
-                dtsk.setAccept(true);
-                try {
-                    ObjectOutputStream dout = new ObjectOutputStream(ConnectSever.getSocket().getOutputStream());
-                    dout.writeObject(dtsk);
-                    Log.d("xxx", "Đã gửi phản hồi: đồng ý");
-                } catch (IOException e) {
-                    Log.d("xxx", Objects.requireNonNull(e.getMessage()));
-                }
-            }).start();
-
-            try {
-                audioCall = new AudioCall(InetAddress.getByName(event.getDataSocket().getData()[0]), Integer.parseInt(event.getDataSocket().getData()[1]));
-                audioCall.startCall();
-            } catch (UnknownHostException e) {
-                e.printStackTrace();
-            }
-        }
-        else if (event.getAction() == BAN_DONG_Y){
-            try {
-                audioCall = new AudioCall(InetAddress.getByName(event.getDataSocket().getData()[0]), Integer.parseInt(event.getDataSocket().getData()[1]));
-                audioCall.startCall();
-            } catch (UnknownHostException e) {
-                e.printStackTrace();
-            }
-        }
-        else if (event.getAction() == NGUOI_GUI_END){
-            App.CALLING = false;
-
-            if (audioCall != null){
-                audioCall.endCall();
-            }
-
-            new Thread(() -> {
-                DataSocket dtsk = new DataSocket();
-                dtsk.setAction("endcall");
-                dtsk.setNguoiGui(event.getDataSocket().getNguoiGui());
-                dtsk.setNguoiNhan(event.getDataSocket().getNguoiNhan());
+                    dtsk.setAccept(true);
+                    try {
+                        ObjectOutputStream dout = new ObjectOutputStream(ConnectSever.getSocket().getOutputStream());
+                        dout.writeObject(dtsk);
+                        Log.d("xxx", "Đã gửi phản hồi: đồng ý");
+                    } catch (IOException e) {
+                        Log.d("xxx", Objects.requireNonNull(e.getMessage()));
+                    }
+                }).start();
 
                 try {
-                    ObjectOutputStream dout = new ObjectOutputStream(ConnectSever.getSocket().getOutputStream());
-                    dout.writeObject(dtsk);
-                } catch (IOException e) {
-                    Log.d("xxx", Objects.requireNonNull(e.getMessage()));
+                    audioCall = new AudioCall(InetAddress.getByName(event.getDataSocket().getData()[0]), Integer.parseInt(event.getDataSocket().getData()[1]));
+                    audioCall.startCall();
+                } catch (UnknownHostException e) {
+                    e.printStackTrace();
                 }
-            }).start();
-        }
-        else if (event.getAction() == NGUOI_NHAN_END){
-            App.CALLING = false;
-
-            if (audioCall != null){
-                audioCall.endCall();
-            }
-
-            new Thread(() -> {
-                DataSocket dtsk = new DataSocket();
-                dtsk.setAction("endcall");
-                dtsk.setNguoiGui(event.getDataSocket().getNguoiNhan());
-                dtsk.setNguoiNhan(event.getDataSocket().getNguoiGui());
-
+                break;
+            case BAN_DONG_Y:
                 try {
-                    ObjectOutputStream dout = new ObjectOutputStream(ConnectSever.getSocket().getOutputStream());
-                    dout.writeObject(dtsk);
-                } catch (IOException e) {
-                    Log.d("xxx", Objects.requireNonNull(e.getMessage()));
+                    audioCall = new AudioCall(InetAddress.getByName(event.getDataSocket().getData()[0]), Integer.parseInt(event.getDataSocket().getData()[1]));
+                    audioCall.startCall();
+                } catch (UnknownHostException e) {
+                    e.printStackTrace();
                 }
-            }).start();
+                break;
+            case NGUOI_GUI_END:
+                App.CALLING = false;
 
-            EventBus.getDefault().post(new CallEvent(KET_THUC_VIEW, null));
-        }
-        else if (event.getAction() == BAN_KET_THUC){
-            App.CALLING = false;
-            if (audioCall != null){
-                audioCall.endCall();
-            }
-
-            EventBus.getDefault().post(new CallEvent(KET_THUC_VIEW, null));
-        }
-        else if (event.getAction() == TOI_TU_CHOI){
-            App.CALLING = false;
-
-            new Thread(() -> {
-                DataSocket dtsk = new DataSocket();
-                dtsk.setAction("respon_call");
-                dtsk.setNguoiGui(event.getDataSocket().getNguoiNhan());
-                dtsk.setNguoiNhan(event.getDataSocket().getNguoiGui());
-                dtsk.setAccept(false);
-
-                try {
-                    ObjectOutputStream dout = new ObjectOutputStream(ConnectSever.getSocket().getOutputStream());
-                    dout.writeObject(dtsk);
-                    Log.d("xxx", "Đã gửi phản hồi: từ chối");
-                } catch (IOException e) {
-                    Log.d("xxx", Objects.requireNonNull(e.getMessage()));
+                if (audioCall != null) {
+                    audioCall.endCall();
                 }
-            }).start();
+
+                new Thread(() -> {
+                    DataSocket dtsk = new DataSocket();
+                    dtsk.setAction("endcall");
+                    dtsk.setNguoiGui(event.getDataSocket().getNguoiGui());
+                    dtsk.setNguoiNhan(event.getDataSocket().getNguoiNhan());
+
+                    try {
+                        ObjectOutputStream dout = new ObjectOutputStream(ConnectSever.getSocket().getOutputStream());
+                        dout.writeObject(dtsk);
+                    } catch (IOException e) {
+                        Log.d("xxx", Objects.requireNonNull(e.getMessage()));
+                    }
+                }).start();
+                break;
+            case NGUOI_NHAN_END:
+                App.CALLING = false;
+
+                if (audioCall != null) {
+                    audioCall.endCall();
+                }
+
+                new Thread(() -> {
+                    DataSocket dtsk = new DataSocket();
+                    dtsk.setAction("endcall");
+                    dtsk.setNguoiGui(event.getDataSocket().getNguoiNhan());
+                    dtsk.setNguoiNhan(event.getDataSocket().getNguoiGui());
+
+                    try {
+                        ObjectOutputStream dout = new ObjectOutputStream(ConnectSever.getSocket().getOutputStream());
+                        dout.writeObject(dtsk);
+                    } catch (IOException e) {
+                        Log.d("xxx", Objects.requireNonNull(e.getMessage()));
+                    }
+                }).start();
+
+                EventBus.getDefault().post(new CallEvent(KET_THUC_VIEW, null));
+                break;
+            case BAN_KET_THUC:
+                App.CALLING = false;
+                if (audioCall != null) {
+                    audioCall.endCall();
+                }
+
+                EventBus.getDefault().post(new CallEvent(KET_THUC_VIEW, null));
+                break;
+            case TOI_TU_CHOI:
+                App.CALLING = false;
+
+                new Thread(() -> {
+                    DataSocket dtsk = new DataSocket();
+                    dtsk.setAction("respon_call");
+                    dtsk.setNguoiGui(event.getDataSocket().getNguoiNhan());
+                    dtsk.setNguoiNhan(event.getDataSocket().getNguoiGui());
+                    dtsk.setAccept(false);
+
+                    try {
+                        ObjectOutputStream dout = new ObjectOutputStream(ConnectSever.getSocket().getOutputStream());
+                        dout.writeObject(dtsk);
+                        Log.d("xxx", "Đã gửi phản hồi: từ chối");
+                    } catch (IOException e) {
+                        Log.d("xxx", Objects.requireNonNull(e.getMessage()));
+                    }
+                }).start();
+                break;
         }
     }
 }

@@ -3,8 +3,11 @@ package com.example.voip_app.service.eventBus;
 import Model.DataSocket;
 
 public class CallEvent {
-    public static final int GUI = 1;
-    public static final int NHAN = 2;
+    public static final int GUI_VOICE_CALL = 1;
+    public static final int NHAN_VOICE_CALL = 2;
+
+    public static final int GUI_VIDEO_CALL = 11;
+    public static final int NHAN_VIDEO_CALL = 22;
 
     public static final int TU_CHOI = 4;
     public static final int BAN_DONG_Y = 5;

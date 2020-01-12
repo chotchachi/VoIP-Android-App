@@ -1,5 +1,6 @@
 package com.example.voip_app;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -7,6 +8,7 @@ import androidx.databinding.DataBindingUtil;
 import androidx.lifecycle.ViewModelProviders;
 
 import com.example.voip_app.databinding.ActivityMakeCallBinding;
+import com.example.voip_app.service.CallService;
 import com.example.voip_app.service.eventBus.CallEvent;
 import com.example.voip_app.viewModel.MakeCallViewModel;
 
@@ -20,7 +22,6 @@ import static com.example.voip_app.service.eventBus.CallEvent.BAN_DONG_Y;
 import static com.example.voip_app.service.eventBus.CallEvent.KET_THUC_VIEW;
 import static com.example.voip_app.service.eventBus.CallEvent.NGUOI_GUI_END;
 import static com.example.voip_app.service.eventBus.CallEvent.TU_CHOI;
-import static com.example.voip_app.util.CommonConstants.EXTRA_CONTACT;
 import static com.example.voip_app.util.CommonConstants.EXTRA_DATA_SOCKET;
 
 public class MakeCallActivity extends AppCompatActivity {
@@ -29,6 +30,7 @@ public class MakeCallActivity extends AppCompatActivity {
 
     private Account receiveAccount;
     private DataSocket dataSocket;
+    private int typeCall;
 
     @Override
     protected void onStart() {
@@ -43,12 +45,12 @@ public class MakeCallActivity extends AppCompatActivity {
         initBinding();
 
         Bundle bundle = getIntent().getExtras();
-        receiveAccount = (Account) bundle.getSerializable(EXTRA_CONTACT);
         dataSocket = (DataSocket) bundle.getSerializable(EXTRA_DATA_SOCKET);
+        receiveAccount = dataSocket.getNguoiNhan();
+        typeCall = bundle.getInt(CallService.TYPE_CALL);
 
         binding.setAccount(receiveAccount);
         viewModel.setDataSocket(dataSocket);
-
     }
 
     private void initBinding() {
@@ -67,7 +69,14 @@ public class MakeCallActivity extends AppCompatActivity {
                 finish();
                 break;
             case BAN_DONG_Y:
+                if (typeCall == CallService.VIDEO_CALL){
+                    Intent intent = new Intent(this, VideoCallActivity.class);
+                    Bundle bundle = new Bundle();
 
+                    bundle.putSerializable(EXTRA_DATA_SOCKET, event.getDataSocket());
+                    intent.putExtras(bundle);
+                    startActivity(intent);
+                }
                 break;
         }
     }

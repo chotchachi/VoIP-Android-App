@@ -1,16 +1,13 @@
-package com.example.voip_app.net.udp;
+package com.example.voip_app.util.udp;
 
 public class Message {
     public static final String MES_TYPE_VIDEO = "MES_TYPE_VIDEO";
     public static final String MES_TYPE_AUDIO = "MES_TYPE_AUDIO";
-    public static final String MES_TYPE_NOMAL = "MES_TYPE_NOMAL";
     private String msgtype;
     private String msgBody;
     private long timestamp;
     private byte[] frame;
     private int sort;
-
-
 
     public String getMsgtype() {
         return msgtype;

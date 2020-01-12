@@ -1,34 +1,18 @@
-package com.example.voip_app.encode;
+package com.example.voip_app.util.encode;
 
 import com.example.voip_app.Contants;
-import com.example.voip_app.base.EncodeManager;
+import com.example.voip_app.util.base.EncodeManager;
 
 import example.sszpf.x264.x264sdk;
 
-/**
- * X264 编码
- * @author xmtggh
- * @time 2019/8/14
- * @email 626393661@qq.com
- **/
 public class X264Encoder extends EncodeManager {
     private x264sdk x264sdkEncode;
 
-    /**
-     * 默认创建
-     */
     public X264Encoder() {
         super(Contants.WIDTH,Contants.HEIGHT,Contants.VBITRATE,Contants.FRAMERATE);
         initEncode();
     }
 
-    /**
-     * 自定义创建
-     * @param vWidth
-     * @param vHeight
-     * @param vBitrate
-     * @param vFrameRate
-     */
     public X264Encoder(int vWidth, int vHeight, int vBitrate, int vFrameRate) {
         super(vWidth, vHeight, vBitrate, vFrameRate);
         initEncode();
@@ -36,12 +20,9 @@ public class X264Encoder extends EncodeManager {
 
     @Override
     protected void initEncode() {
-        x264sdkEncode = new x264sdk(vWidth, vHeight, vFrameRate, vBitrate, new x264sdk.listener() {
-            @Override
-            public void h264data(byte[] buffer, int length) {
-                if (mEncodeCallback!=null){
-                    mEncodeCallback.onEncodeCallback(buffer);
-                }
+        x264sdkEncode = new x264sdk(vWidth, vHeight, vFrameRate, vBitrate, (buffer, length) -> {
+            if (mEncodeCallback!=null){
+                mEncodeCallback.onEncodeCallback(buffer);
             }
         });
     }
@@ -52,9 +33,7 @@ public class X264Encoder extends EncodeManager {
             x264sdkEncode.CloseX264Encode();
             x264sdkEncode = null;
         }
-
     }
-
 
     @Override
     public void onEncodeData(byte[] data) {
